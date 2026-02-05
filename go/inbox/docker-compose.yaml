@@ -1,0 +1,40 @@
+services:
+  db_transactions:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: transactions_db
+    volumes:
+      - transactions_data:/var/lib/postgresql/data
+    networks:
+      - txnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  transaction_processor:
+    build: ./transaction_processor
+    volumes:
+      - ./transaction_processor:/app
+    depends_on:
+      db_transactions:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db_transactions:5432/transactions_db
+      FAULTY: 0.2
+    command: ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    networks:
+      - txnet
+
+networks:
+  txnet:
+    driver: bridge
+volumes:
+  transactions_data: {}
+  balance_data: {}
+  kafka_data: {}
