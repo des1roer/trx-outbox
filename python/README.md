@@ -9,11 +9,25 @@ stop
 make down
 ```
 
+YouTube https://www.youtube.com/watch?v=6tbxwr53ORk&list=PLyFjBjJZlCrse_HxAqvuYSvAVavavOWSJ&index=4
+
 Kafka UI
 
 http://localhost:8802/ui/clusters/local/brokers
 
-Postgres
+Postgres 1st db
+
+```
+postgresql://localhost:5444/transactions_db
+postgres/postgres
+```
+
+Postgres 2nd db
+
+```
+postgresql://localhost:5443/balance_db
+postgres/postgres
+```
 
 steps
 
@@ -23,6 +37,14 @@ python3 tx.py -u 1 -a 10
 
 python3 tx.py -u 1 -a 10 -i 3849e652-3603-4908-bc07-113853232a18 # retry with same external id
 # Transaction processed successfully: {'status': 'processed', 'transaction_id': 7270069135592132608, 'balance': '10.00', 'created_at': '2024-12-04T13:39:13.264274', 'duplicate': True}
+
+docker-compose exec -it kafka /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server kafka:9092
+
+docker-compose exec -it kafka bash
+
+/opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic transactions --from-beginning
+/opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list
+/opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --delete --group console-consumer-29690
 ```
 
 magnet

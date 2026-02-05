@@ -8,7 +8,7 @@ services:
     volumes:
       - transactions_data:/var/lib/postgresql/data
     ports:
-      - ${POSTGRES_EXTERNAL_PORT}:5432
+      - ${POSTGRES_TRANSACTION_PORT}:5432
     networks:
       - txnet
     healthcheck:
@@ -113,6 +113,8 @@ services:
       POSTGRES_DB: balance_db
     volumes:
       - balance_data:/var/lib/postgresql/data
+    ports:
+      - ${POSTGRES_BALANCE_PORT}:5432
     networks:
       - txnet
     healthcheck:
