@@ -1,0 +1,22 @@
+{
+    "name": "inbox-jdbc-sink",
+    "config": {
+      "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+
+      "topics": "outbox",
+
+      "connection.url": "jdbc:postgresql://db_balance:5432/balance_db?user=postgres&password=postgres",
+
+      "insert.mode": "insert",
+      "table.name.format": "inbox_events",
+      "auto.create": "false",
+      "auto.evolve": "false",
+
+      "pk.mode": "none",
+
+      "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+      "key.converter.schemas.enable": "true",
+      "value.converter.schemas.enable": "true"
+    }
+}

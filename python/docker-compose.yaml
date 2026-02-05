@@ -83,27 +83,27 @@ services:
     networks:
       - txnet
 
-  outbox_processor:
-    build: ./outbox_processor
-    volumes:
-      - ./outbox_processor:/app
-    depends_on:
-      transaction_processor:
-        condition: service_started
-      db_transactions:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@db_transactions:5432/transactions_db
-      KAFKA_BROKER: kafka:9092
-      KAFKA_TOPIC: transactions
-      FAULTY: 0.2
-    init: true
-    tty: true
-    command: ["python", "outbox_processor.py"]
-    networks:
-      - txnet
+#  outbox_processor:
+#    build: ./outbox_processor
+#    volumes:
+#      - ./outbox_processor:/app
+#    depends_on:
+#      transaction_processor:
+#        condition: service_started
+#      db_transactions:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_started
+#    environment:
+#      DATABASE_URL: postgres://postgres:postgres@db_transactions:5432/transactions_db
+#      KAFKA_BROKER: kafka:9092
+#      KAFKA_TOPIC: transactions
+#      FAULTY: 0.2
+#    init: true
+#    tty: true
+#    command: ["python", "outbox_processor.py"]
+#    networks:
+#      - txnet
 
   db_balance:
     image: postgres:15
@@ -123,25 +123,25 @@ services:
       timeout: 5s
       retries: 5
 
-  inbox_processor:
-    build: ./inbox_processor
-    volumes:
-      - ./inbox_processor:/app
-    depends_on:
-      db_balance:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@db_balance:5432/balance_db
-      KAFKA_BROKER: kafka:9092
-      KAFKA_TOPIC: transactions
-      FAULTY: 0.2
-    init: true
-    tty: true
-    command: ["python", "inbox_processor.py"]
-    networks:
-      - txnet
+#  inbox_processor:
+#    build: ./inbox_processor
+#    volumes:
+#      - ./inbox_processor:/app
+#    depends_on:
+#      db_balance:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_started
+#    environment:
+#      DATABASE_URL: postgres://postgres:postgres@db_balance:5432/balance_db
+#      KAFKA_BROKER: kafka:9092
+#      KAFKA_TOPIC: transactions
+#      FAULTY: 0.2
+#    init: true
+#    tty: true
+#    command: ["python", "inbox_processor.py"]
+#    networks:
+#      - txnet
 
   balance_viewer:
     build: ./balance_viewer
@@ -156,6 +156,48 @@ services:
     init: true
     ports:
       - "8100:8100"
+    networks:
+      - txnet
+
+  kafka_connect:
+    image: confluentinc/cp-kafka-connect:latest
+    depends_on:
+      kafka:
+        condition: service_started
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_REST_PORT: 8083
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka_connect
+
+      CONNECT_GROUP_ID: tx-connect-cluster
+      CONNECT_CONFIG_STORAGE_TOPIC: tx-connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: tx-connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: tx-connect-status
+
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
+
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+    command:
+      - bash
+      - -c
+      - |
+        set -e
+        echo "Installing Connector"
+        confluent-hub install --no-prompt confluentinc/kafka-connect-jdbc:latest
+        #
+        echo "Launching Kafka Connect worker"
+        /etc/confluent/docker/run &
+        #
+        sleep infinity
+    volumes:
+      - ./connect:/docker-entrypoint-init.d
+    ports:
+      - "8083:8083"
     networks:
       - txnet
 
