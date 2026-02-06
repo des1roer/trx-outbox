@@ -45,6 +45,23 @@ docker-compose exec -it kafka bash
 /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic transactions --from-beginning
 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --list
 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --delete --group console-consumer-29690
+
+docker-compose exec -T db_balance psql -U postgres balance_db < balance_viewer/db_init/01-schema.sql
+
+curl -s -X POST "http://localhost:8083/connectors" \
+  -H "Content-Type: application/json" \
+  -d @connect/outbox-source.json
+
+curl -s -X POST "http://localhost:8083/connectors" \
+  -H "Content-Type: application/json" \
+  -d @connect/inbox-sink.json
+  
+  --- изменить конфиг 
+  
+curl -s -X DELETE "http://localhost:8083/connectors/inbox-jdbc-sink"
+  
+curl -s http://localhost:8083/connectors/outbox-jdbc-source/status
+curl -s http://localhost:8083/connectors/inbox-jdbc-sink/status
 ```
 
 magnet
