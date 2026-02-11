@@ -53,5 +53,17 @@ services:
       CONNECT_REST_ADVERTISED_HOST_NAME: "localhost"
       CONNECT_LOG4J_ROOT_LOGLEVEL: DEBUG
       CONNECT_PLUGIN_PATH: "/usr/share/java,/etc/kafka-connect/jars"
+#    command:
+#      - bash
+#      - -c
+#      - |
+#        set -e
+#        echo "Installing Connector"
+#        confluent-hub install --no-prompt confluentinc/kafka-connect-jdbc:latest
+#        #
+#        echo "Launching Kafka Connect worker"
+#        /etc/confluent/docker/run &
+#        #
+#        sleep infinity
     volumes:
       - $PWD/jars:/etc/kafka-connect/jars
